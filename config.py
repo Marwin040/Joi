@@ -12,5 +12,5 @@ MONGO_DB_URL = getenv(
 )
 
 START_IMG_URL = getenv(
-    "START_IMG_URL", "https://envs.sh/_IF.jpg"
+    "START_IMG_URL", "https://graph.org/file/fb0a52cab97ca0aa4c523-dda25587b44c6713d4.jpg"
 )
