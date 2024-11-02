@@ -8,14 +8,14 @@ import random
 import requests
 from pymongo import MongoClient
 from telegram import Update
-from telegram.ext import ContextTypes, MessageHandler, filters
+from telegram.ext import Application, ContextTypes, MessageHandler, filters
 import logging
 
 # Configuration
 MONGO_DB_URL = "mongodb+srv://marwin0985:BEwJvxaADStDLScc@cluster0.oh0nk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 TOKEN = "7343734756:AAFQJ1lYOgmroGBazwWfP-HC9jAMFSTGv08"
 AI_API_KEY = "RBPOWF2m8z85prBQ"
-AI_BID = "171092"                # Replace with your bot ID
+AI_BID = "171092"
 
 # Enable logging
 logging.basicConfig(
@@ -67,7 +67,7 @@ async def log_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await message.reply_text(hey)
         
         else:  # Handling replies to messages
-            if message.reply_to_message.from_user.id == BOT_ID:
+            if message.reply_to_message.from_user.id == context.bot.id:
                 K = []
                 is_chat = chatbotai.find({"chat": chat.id, "word": message.text})
                 for x in is_chat:
@@ -86,7 +86,7 @@ async def log_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 else:
                     await message.reply_text(hey)
 
-            elif message.reply_to_message.from_user.id != BOT_ID:
+            elif message.reply_to_message.from_user.id != context.bot.id:
                 if message.sticker:
                     is_chat = chatbotai.find_one({
                         "chat": chat.id,
@@ -119,6 +119,14 @@ async def log_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         logger.error(f"Error in log_user: {e}")
 
+# Initialize the application
+rani = Application.builder().token(TOKEN).build()
+
 # Register message handler
 USER_HANDLER = MessageHandler(filters.ALL, log_user, block=False)
-rani.add_handler(USER_HANDLER, USERS_GROUP)
+rani.add_handler(USER_HANDLER)
+
+if __name__ == '__main__':
+    logger.info("Starting the bot...")
+    rani.run_polling()
+    
