@@ -44,10 +44,10 @@ async def log_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     try:
                         response_json = r.json()
                         hey = response_json.get("cnt", "I didn't get a response.")
-                    except ValueError:
-                        hey = "Failed to decode JSON response."
+                    except ValueError as ve:
+                        hey = f"Failed to decode JSON response: {ve}. Response content: {r.text}"
                 else:
-                    hey = f"Error: Received status code {r.status_code}"
+                    hey = f"Error: Received status code {r.status_code}. Response content: {r.text}"
 
                 Yo = None
 
@@ -76,10 +76,10 @@ async def log_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         try:
                             response_json = r.json()
                             hey = response_json.get("cnt", "I didn't get a response.")
-                        except ValueError:
-                            hey = "Failed to decode JSON response."
+                        except ValueError as ve:
+                            hey = f"Failed to decode JSON response: {ve}. Response content: {r.text}"
                     else:
-                        hey = f"Error: Received status code {r.status_code}"
+                        hey = f"Error: Received status code {r.status_code}. Response content: {r.text}"
 
                     Yo = None
 
