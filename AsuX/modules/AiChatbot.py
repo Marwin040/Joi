@@ -40,7 +40,7 @@ async def log_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 hey, Yo = await fetch_response(message)
 
             if Yo == "sticker":
-                await message.reply_sticker(hey)
+                await send_sticker(chat, hey)
             else:
                 await message.reply_text(hey)
 
@@ -59,7 +59,7 @@ async def log_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     hey, Yo = await fetch_response(message)
 
                 if Yo == "sticker":
-                    await message.reply_sticker(hey)
+                    await send_sticker(chat, hey)
                 else:
                     await message.reply_text(hey)
 
@@ -89,6 +89,12 @@ async def fetch_response(message):
     except ValueError as ve:
         print(f"JSON decode error: {ve}")
         return "I encountered an error with the response. Please try again.", None
+
+async def send_sticker(chat, sticker_id):
+    try:
+        await chat.send_sticker(sticker_id)
+    except Exception as e:
+        print(f"Error sending sticker: {e}")
 
 async def handle_reply_sticker(chat, message):
     if message.sticker:
@@ -125,4 +131,3 @@ async def handle_reply_text(chat, message):
 
 USER_HANDLER = MessageHandler(filters.ALL, log_user, block=False)
 rani.add_handler(USER_HANDLER, USERS_GROUP)
-    
