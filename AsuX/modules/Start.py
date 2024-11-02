@@ -45,7 +45,6 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 out = start_panel(_)
-                await message.reply_photo(
                     photo=config.START_IMG_URL,
                     caption=_["start_3"].format(
                         message.from_user.first_name,
