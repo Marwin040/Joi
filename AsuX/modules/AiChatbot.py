@@ -74,7 +74,7 @@ async def fetch_response(message):
     try:
         r = requests.get(
             f"http://api.brainshop.ai/get?bid={AI_BID}&uid={message.from_user.id}&key={AI_API_KEY}&msg={message.text}",
-            timeout=5
+            timeout=5  # Timeout set for 5 seconds
         )
         r.raise_for_status()  # Check for HTTP errors
         response_json = r.json()
@@ -82,13 +82,13 @@ async def fetch_response(message):
         return hey, None
     except Timeout:
         print("Request timed out while fetching response.")
-        return "I'm having trouble reaching my source. Please try again later.", None
+        return "I'm currently unable to reach my data source. Please try again later.", None
     except RequestException as e:
         print(f"Request error: {e}")
-        return "There was an issue with the request. Please try again.", None
+        return "There seems to be an issue connecting to my data source. Please try again later.", None
     except ValueError as ve:
         print(f"JSON decode error: {ve}")
-        return "I encountered an error with the response. Please try again.", None
+        return "I encountered an error while processing the response. Please try again later.", None
 
 async def send_sticker(chat, sticker_id):
     try:
