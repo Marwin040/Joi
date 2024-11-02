@@ -6,13 +6,14 @@
 
 import random
 import requests
+import re
 from pymongo import MongoClient
 from telegram import Update
 from telegram.ext import Application, ContextTypes, MessageHandler, filters
 from requests.exceptions import Timeout, RequestException
 import logging
 
-# Configuration (replace with your actual values)
+# Configuration - replace with your actual values
 MONGO_DB_URL = "mongodb+srv://marwin0985:BEwJvxaADStDLScc@cluster0.oh0nk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 TOKEN = "7343734756:AAFQJ1lYOgmroGBazwWfP-HC9jAMFSTGv08"
 AI_API_KEY = "RBPOWF2m8z85prBQ"
@@ -26,12 +27,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 async def fetch_response(message, retries=3):
+    """Fetch a response from the AI API."""
     url = f"http://api.brainshop.ai/get?bid={AI_BID}&uid={message.from_user.id}&key={AI_API_KEY}&msg={message.text}"
     
     for attempt in range(retries):
         try:
-            response = requests.get(url, timeout=5)  # Timeout set for 5 seconds
-            response.raise_for_status()  # Raise error for bad responses
+            response = requests.get(url, timeout=5)
+            response.raise_for_status()
             response_json = response.json()
             return response_json.get("cnt", "I didn't get a response.")
         except Timeout:
@@ -43,6 +45,7 @@ async def fetch_response(message, retries=3):
     return "I'm still having trouble reaching my data source. Please try again later."
 
 async def log_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle incoming messages."""
     chat = update.effective_chat
     message = update.effective_message
 
@@ -53,12 +56,16 @@ async def log_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     try:
+        # Check if message.text is a string
+        if not isinstance(message.text, str):
+            logger.error("Message text is not a string.")
+            return
+        
         chatbotdb = MongoClient(MONGO_DB_URL)
         chatbotai = chatbotdb["Word"]["WordDb"]
         logger.info("Connected to MongoDB successfully.")
 
         if not message.reply_to_message:
-            # Check if there's a stored response for the user's input
             response_texts = [x["text"] for x in chatbotai.find({"chat": chat.id, "word": message.text})]
             if response_texts:
                 response = random.choice(response_texts)
@@ -67,7 +74,6 @@ async def log_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             await message.reply_text(response)
         else:
-            # Handle replies to the bot
             if message.reply_to_message.from_user.id == context.bot.id:
                 response_texts = [x["text"] for x in chatbotai.find({"chat": chat.id, "word": message.text})]
                 if response_texts:
@@ -80,6 +86,12 @@ async def log_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         logger.error(f"Error in log_user: {e}")
 
+async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Log the error and send a message to the user."""
+    logger.error(f"Update {update} caused error {context.error}")
+    if update and update.effective_chat:
+        await update.effective_chat.send_message("An error occurred. Please try again later.")
+
 # Initialize the application
 rani = Application.builder().token(TOKEN).build()
 
@@ -87,7 +99,9 @@ rani = Application.builder().token(TOKEN).build()
 USER_HANDLER = MessageHandler(filters.TEXT & ~filters.COMMAND, log_user)
 rani.add_handler(USER_HANDLER)
 
+# Add error handler
+rani.add_error_handler(error_handler)
+
 if __name__ == '__main__':
     logger.info("Starting the bot...")
     rani.run_polling()
-            
