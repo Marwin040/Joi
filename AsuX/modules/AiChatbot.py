@@ -10,18 +10,17 @@ from pymongo import MongoClient
 from telegram import Update
 from telegram.ext import Application, ContextTypes, MessageHandler, filters
 from requests.exceptions import Timeout, RequestException
-
-from AsuX.modules import ALL_MODULES
-from config import MONGO_DB_URL, TOKEN
-
-AI_API_KEY = "RBPOWF2m8z85prBQ"
-AI_BID = "171092"
-
-# Enable logging
 import logging
 
+# Configuration (replace with your actual values)
+MONGO_DB_URL = "your_mongo_db_url_here"
+TOKEN = "your_telegram_bot_token_here"
+AI_API_KEY = "your_ai_api_key_here"
+AI_BID = "your_ai_bid_here"
+
+# Enable logging
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.DEBUG
 )
 
 logger = logging.getLogger(__name__)
@@ -56,7 +55,8 @@ async def log_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         chatbotdb = MongoClient(MONGO_DB_URL)
         chatbotai = chatbotdb["Word"]["WordDb"]
-        
+        logger.info("Connected to MongoDB successfully.")
+
         if not message.reply_to_message:
             # Check if there's a stored response for the user's input
             response_texts = [x["text"] for x in chatbotai.find({"chat": chat.id, "word": message.text})]
@@ -84,10 +84,10 @@ async def log_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
 rani = Application.builder().token(TOKEN).build()
 
 # Add message handler
-USER_HANDLER = MessageHandler(filters.TEXT & ~filters.COMMAND, log_user)  # Only text messages
+USER_HANDLER = MessageHandler(filters.TEXT & ~filters.COMMAND, log_user)
 rani.add_handler(USER_HANDLER)
 
 if __name__ == '__main__':
     logger.info("Starting the bot...")
     rani.run_polling()
-    
+            
