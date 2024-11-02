@@ -1,6 +1,6 @@
 requests
 motor
-pymongo[src]
+pymongo
 dnspython
 python-telegram-bot==20.0
 psutil
