@@ -5,10 +5,20 @@
 """
 
 from telegram import Update
-from telegram.ext import ContextTypes, MessageHandler, filters
+from telegram.ext import Application, ContextTypes, MessageHandler, filters
 from pymongo import MongoClient
 import requests
 import random
+
+# Replace these with your actual configuration values
+MONGO_DB_URL = 'mongodb+srv://marwin0985:BEwJvxaADStDLScc@cluster0.oh0nk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
+AI_BID = '171092'
+AI_API_KEY = 'RBPOWF2m8z85prBQ'
+BOT_ID = '7343734756'
+USERS_GROUP = '-1002438582806'  # Define your user group if needed
+
+# Initialize the bot
+rani = Application.builder().token('YOUR_TOKEN').build()  # Replace 'YOUR_TOKEN' with your bot token
 
 async def log_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
@@ -108,9 +118,13 @@ async def handle_sticker_or_text_response(message, chat, chatbotai):
                     "text": message.text,
                     "check": "none",
                 }
-        )
-            
+            )
 
-
+# Add the handler
 USER_HANDLER = MessageHandler(filters.ALL, log_user, block=False)
-rani.add_handler(USER_HANDLER, USERS_GROUP)
+rani.add_handler(USER_HANDLER)
+
+# Start the bot
+if __name__ == '__main__':
+    rani.run_polling()
+    
