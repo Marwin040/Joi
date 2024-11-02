@@ -7,12 +7,40 @@ import random
 import requests
 from pymongo import MongoClient
 from telegram import Update
-from telegram.ext import ContextTypes, MessageHandler, filters
+from telegram.ext import Application, ContextTypes, MessageHandler, filters
 from requests.exceptions import Timeout, RequestException
 
-from AsuX import *
+from AsuX.modules import ALL_MODULES
+from config import MONGO_DB_URL, TOKEN
 
-USERS_GROUP = 11
+AI_API_KEY = "RBPOWF2m8z85prBQ"
+AI_BID = "171092"
+
+# Enable logging
+import logging
+
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+)
+
+logger = logging.getLogger(__name__)
+
+async def fetch_response(message, retries=3):
+    url = f"http://api.brainshop.ai/get?bid={AI_BID}&uid={message.from_user.id}&key={AI_API_KEY}&msg={message.text}"
+    
+    for attempt in range(retries):
+        try:
+            response = requests.get(url, timeout=5)  # Timeout set for 5 seconds
+            response.raise_for_status()  # Raise error for bad responses
+            response_json = response.json()
+            return response_json.get("cnt", "I didn't get a response.")
+        except Timeout:
+            logger.warning("Request timed out. Retrying...")
+        except RequestException as e:
+            logger.error(f"Request error: {e}")
+            return "There seems to be an issue with the connection. Please try again later."
+    
+    return "I'm still having trouble reaching my data source. Please try again later."
 
 async def log_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
@@ -26,108 +54,37 @@ async def log_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chatbotai = chatbotdb["Word"]["WordDb"]
 
     try:
-        # Handling messages that are not replies
         if not message.reply_to_message:
-            K = []
-            is_chat = chatbotai.find({"chat": chat.id, "word": message.text})
-            K = [x["text"] for x in is_chat]
-
-            if K:
-                hey = random.choice(K)
-                is_text = chatbotai.find_one({"chat": chat.id, "text": hey})
-                Yo = is_text["check"] if is_text else None
+            # Check if there's a stored response for the user's input
+            response_texts = [x["text"] for x in chatbotai.find({"chat": chat.id, "word": message.text})]
+            if response_texts:
+                response = random.choice(response_texts)
             else:
-                hey, Yo = await fetch_response(message)
+                response = await fetch_response(message)
 
-            if Yo == "sticker":
-                await send_sticker(chat, hey)
-            else:
-                await message.reply_text(hey)
+            await message.reply_text(response)
 
-        # Handling replies to the bot
         else:
+            # Handle replies to the bot
             if message.reply_to_message.from_user.id == BOT_ID:
-                K = []
-                is_chat = chatbotai.find({"chat": chat.id, "word": message.text})
-                K = [x["text"] for x in is_chat]
-
-                if K:
-                    hey = random.choice(K)
-                    is_text = chatbotai.find_one({"chat": chat.id, "text": hey})
-                    Yo = is_text["check"] if is_text else None
+                response_texts = [x["text"] for x in chatbotai.find({"chat": chat.id, "word": message.text})]
+                if response_texts:
+                    response = random.choice(response_texts)
                 else:
-                    hey, Yo = await fetch_response(message)
+                    response = await fetch_response(message)
 
-                if Yo == "sticker":
-                    await send_sticker(chat, hey)
-                else:
-                    await message.reply_text(hey)
-
-            elif message.reply_to_message.from_user.id != BOT_ID:
-                await handle_reply_sticker(chat, message)
-                await handle_reply_text(chat, message)
+                await message.reply_text(response)
 
     except Exception as e:
-        print(f"Error in log_user: {e}")
+        logger.error(f"Error in log_user: {e}")
 
-async def fetch_response(message):
-    try:
-        r = requests.get(
-            f"http://api.brainshop.ai/get?bid={AI_BID}&uid={message.from_user.id}&key={AI_API_KEY}&msg={message.text}",
-            timeout=5  # Timeout set for 5 seconds
-        )
-        r.raise_for_status()  # Check for HTTP errors
-        response_json = r.json()
-        hey = response_json.get("cnt", "I didn't get a response.")
-        return hey, None
-    except Timeout:
-        print("Request timed out while fetching response.")
-        return "I'm currently unable to reach my data source. Please try again later.", None
-    except RequestException as e:
-        print(f"Request error: {e}")
-        return "There seems to be an issue connecting to my data source. Please try again later.", None
-    except ValueError as ve:
-        print(f"JSON decode error: {ve}")
-        return "I encountered an error while processing the response. Please try again later.", None
+# Initialize the application
+rani = Application.builder().token(TOKEN).build()
 
-async def send_sticker(chat, sticker_id):
-    try:
-        await chat.send_sticker(sticker_id)
-    except Exception as e:
-        print(f"Error sending sticker: {e}")
+# Add message handler
+USER_HANDLER = MessageHandler(filters.ALL, log_user)
+rani.add_handler(USER_HANDLER)
 
-async def handle_reply_sticker(chat, message):
-    if message.sticker:
-        reply_text = message.reply_to_message.text if message.reply_to_message and isinstance(message.reply_to_message.text, str) else ""
-        is_chat = chatbotai.find_one({
-            "chat": chat.id,
-            "word": reply_text,
-            "id": message.sticker.file_unique_id,
-        })
-        if not is_chat:
-            chatbotai.insert_one({
-                "chat": chat.id,
-                "word": reply_text,
-                "text": message.sticker.file_id,
-                "check": "sticker",
-                "id": message.sticker.file_unique_id,
-            })
-
-async def handle_reply_text(chat, message):
-    if message.text:
-        reply_text = message.reply_to_message.text if message.reply_to_message and isinstance(message.reply_to_message.text, str) else ""
-        is_chat = chatbotai.find_one({
-            "chat": chat.id,
-            "word": reply_text,
-            "text": message.text,
-        })
-        if not is_chat:
-            chatbotai.insert_one({
-                "chat": chat.id,
-                "word": reply_text,
-                "text": message.text,
-                "check": "none",
-            })
-
-USER_HANDLER = MessageHandler(filters.ALL, log_user, block=False)
-rani.add_handler(USER_HANDLER, USERS_GROUP)
+if __name__ == '__main__':
+    rani.run_polling()
+    
