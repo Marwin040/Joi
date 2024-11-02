@@ -10,3 +10,7 @@ MONGO_DB_URL = getenv(
     "MONGO_DB_URL",
     "marwin0985:BEwJvxaADStDLScc@cluster0.oh0nk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
 )
+
+START_IMG_URL = getenv(
+    "START_IMG_URL", "https://envs.sh/_IF.jpg"
+)
