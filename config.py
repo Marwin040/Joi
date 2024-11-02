@@ -8,7 +8,7 @@ TOKEN = getenv("TOKEN", "7343734756:AAH8s5_dyMaiDYyvS0MywvmRnDk0_f26Rgk")
 
 MONGO_DB_URL = getenv(
     "MONGO_DB_URL",
-    "marwin0985:BEwJvxaADStDLScc@cluster0.oh0nk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
+    "mongodb+srv://marwin0985:BEwJvxaADStDLScc@cluster0.oh0nk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
 )
 
 START_IMG_URL = getenv(
