@@ -19,7 +19,7 @@ async def log_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.effective_message
 
     # Ignore commands or special messages
-    if message.text.startswith(("!", "/", "?", "@", "#")):
+    if message.text and message.text.startswith(("!", "/", "?", "@", "#")):
         return
 
     chatbotdb = MongoClient(MONGO_DB_URL)
@@ -89,15 +89,17 @@ async def fetch_response(message):
 
 async def handle_reply_sticker(chat, message):
     if message.sticker:
+        # Ensure the reply message has text and is a string
+        reply_text = message.reply_to_message.text if message.reply_to_message and isinstance(message.reply_to_message.text, str) else ""
         is_chat = chatbotai.find_one({
             "chat": chat.id,
-            "word": message.reply_to_message.text,
+            "word": reply_text,
             "id": message.sticker.file_unique_id,
         })
         if not is_chat:
             chatbotai.insert_one({
                 "chat": chat.id,
-                "word": message.reply_to_message.text,
+                "word": reply_text,
                 "text": message.sticker.file_id,
                 "check": "sticker",
                 "id": message.sticker.file_unique_id,
@@ -105,15 +107,16 @@ async def handle_reply_sticker(chat, message):
 
 async def handle_reply_text(chat, message):
     if message.text:
+        reply_text = message.reply_to_message.text if message.reply_to_message and isinstance(message.reply_to_message.text, str) else ""
         is_chat = chatbotai.find_one({
             "chat": chat.id,
-            "word": message.reply_to_message.text,
+            "word": reply_text,
             "text": message.text,
         })
         if not is_chat:
             chatbotai.insert_one({
                 "chat": chat.id,
-                "word": message.reply_to_message.text,
+                "word": reply_text,
                 "text": message.text,
                 "check": "none",
             })
