@@ -4,11 +4,11 @@
 
 """
 
-import random
-import requests
-from pymongo import MongoClient
 from telegram import Update
-from telegram.ext import ContextTypes
+from telegram.ext import ContextTypes, MessageHandler, filters
+from pymongo import MongoClient
+import requests
+import random
 
 async def log_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
