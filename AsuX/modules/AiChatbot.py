@@ -76,20 +76,22 @@ async def fetch_response(message):
             f"http://api.brainshop.ai/get?bid={AI_BID}&uid={message.from_user.id}&key={AI_API_KEY}&msg={message.text}",
             timeout=5
         )
-        r.raise_for_status()
+        r.raise_for_status()  # Check for HTTP errors
         response_json = r.json()
         hey = response_json.get("cnt", "I didn't get a response.")
         return hey, None
     except Timeout:
-        return "Request timed out. Please try again.", None
+        print("Request timed out while fetching response.")
+        return "I'm having trouble reaching my source. Please try again later.", None
     except RequestException as e:
-        return f"Request error: {e}.", None
+        print(f"Request error: {e}")
+        return "There was an issue with the request. Please try again.", None
     except ValueError as ve:
-        return f"Failed to decode JSON response: {ve}.", None
+        print(f"JSON decode error: {ve}")
+        return "I encountered an error with the response. Please try again.", None
 
 async def handle_reply_sticker(chat, message):
     if message.sticker:
-        # Ensure the reply message has text and is a string
         reply_text = message.reply_to_message.text if message.reply_to_message and isinstance(message.reply_to_message.text, str) else ""
         is_chat = chatbotai.find_one({
             "chat": chat.id,
@@ -123,3 +125,4 @@ async def handle_reply_text(chat, message):
 
 USER_HANDLER = MessageHandler(filters.ALL, log_user, block=False)
 rani.add_handler(USER_HANDLER, USERS_GROUP)
+    
