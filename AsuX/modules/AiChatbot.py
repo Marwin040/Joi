@@ -13,10 +13,10 @@ from requests.exceptions import Timeout, RequestException
 import logging
 
 # Configuration (replace with your actual values)
-MONGO_DB_URL = "your_mongo_db_url_here"
-TOKEN = "your_telegram_bot_token_here"
-AI_API_KEY = "your_ai_api_key_here"
-AI_BID = "your_ai_bid_here"
+MONGO_DB_URL = "mongodb+srv://marwin0985:BEwJvxaADStDLScc@cluster0.oh0nk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+TOKEN = "7343734756:AAFQJ1lYOgmroGBazwWfP-HC9jAMFSTGv08"
+AI_API_KEY = "RBPOWF2m8z85prBQ"
+AI_BID = "171092"
 
 # Enable logging
 logging.basicConfig(
