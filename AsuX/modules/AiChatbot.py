@@ -8,6 +8,7 @@ import requests
 from pymongo import MongoClient
 from telegram import Update
 from telegram.ext import ContextTypes, MessageHandler, filters
+from requests.exceptions import Timeout, RequestException
 
 from AsuX import *
 
@@ -36,18 +37,21 @@ async def log_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 is_text = chatbotai.find_one({"chat": chat.id, "text": hey})
                 Yo = is_text["check"]
             else:
-                r = requests.get(
-                    f"http://api.brainshop.ai/get?bid={AI_BID}&uid={message.from_user.id}&key={AI_API_KEY}&msg={message.text}"
-                )
-
-                if r.status_code == 200:
-                    try:
-                        response_json = r.json()
-                        hey = response_json.get("cnt", "I didn't get a response.")
-                    except ValueError as ve:
-                        hey = f"Failed to decode JSON response: {ve}. Response content: {r.text}"
-                else:
-                    hey = f"Error: Received status code {r.status_code}. Response content: {r.text}"
+                try:
+                    r = requests.get(
+                        f"http://api.brainshop.ai/get?bid={AI_BID}&uid={message.from_user.id}&key={AI_API_KEY}&msg={message.text}",
+                        timeout=5  # Set a timeout for the request
+                    )
+                    r.raise_for_status()  # Raise an error for bad responses
+                    
+                    response_json = r.json()
+                    hey = response_json.get("cnt", "I didn't get a response.")
+                except Timeout:
+                    hey = "Request timed out. Please try again."
+                except RequestException as e:
+                    hey = f"Request error: {e}. Response content: {r.text if r else 'No response'}"
+                except ValueError as ve:
+                    hey = f"Failed to decode JSON response: {ve}. Response content: {r.text}"
 
                 Yo = None
 
@@ -68,18 +72,21 @@ async def log_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     is_text = chatbotai.find_one({"chat": chat.id, "text": hey})
                     Yo = is_text["check"]
                 else:
-                    r = requests.get(
-                        f"http://api.brainshop.ai/get?bid={AI_BID}&uid={message.from_user.id}&key={AI_API_KEY}&msg={message.text}"
-                    )
+                    try:
+                        r = requests.get(
+                            f"http://api.brainshop.ai/get?bid={AI_BID}&uid={message.from_user.id}&key={AI_API_KEY}&msg={message.text}",
+                            timeout=5  # Set a timeout for the request
+                        )
+                        r.raise_for_status()
 
-                    if r.status_code == 200:
-                        try:
-                            response_json = r.json()
-                            hey = response_json.get("cnt", "I didn't get a response.")
-                        except ValueError as ve:
-                            hey = f"Failed to decode JSON response: {ve}. Response content: {r.text}"
-                    else:
-                        hey = f"Error: Received status code {r.status_code}. Response content: {r.text}"
+                        response_json = r.json()
+                        hey = response_json.get("cnt", "I didn't get a response.")
+                    except Timeout:
+                        hey = "Request timed out. Please try again."
+                    except RequestException as e:
+                        hey = f"Request error: {e}. Response content: {r.text if r else 'No response'}"
+                    except ValueError as ve:
+                        hey = f"Failed to decode JSON response: {ve}. Response content: {r.text}"
 
                     Yo = None
 
@@ -123,4 +130,3 @@ async def log_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 USER_HANDLER = MessageHandler(filters.ALL, log_user, block=False)
 rani.add_handler(USER_HANDLER, USERS_GROUP)
-                    
