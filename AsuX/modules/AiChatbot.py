@@ -39,8 +39,16 @@ async def log_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 r = requests.get(
                     f"http://api.brainshop.ai/get?bid={AI_BID}&uid={message.from_user.id}&key={AI_API_KEY}&msg={message.text}"
                 )
-                r.raise_for_status()  # Raise an error for bad responses
-                hey = r.json().get("cnt", "I didn't get a response.")
+
+                if r.status_code == 200:
+                    try:
+                        response_json = r.json()
+                        hey = response_json.get("cnt", "I didn't get a response.")
+                    except ValueError:
+                        hey = "Failed to decode JSON response."
+                else:
+                    hey = f"Error: Received status code {r.status_code}"
+
                 Yo = None
 
             if Yo == "sticker":
@@ -63,8 +71,16 @@ async def log_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     r = requests.get(
                         f"http://api.brainshop.ai/get?bid={AI_BID}&uid={message.from_user.id}&key={AI_API_KEY}&msg={message.text}"
                     )
-                    r.raise_for_status()
-                    hey = r.json().get("cnt", "I didn't get a response.")
+
+                    if r.status_code == 200:
+                        try:
+                            response_json = r.json()
+                            hey = response_json.get("cnt", "I didn't get a response.")
+                        except ValueError:
+                            hey = "Failed to decode JSON response."
+                    else:
+                        hey = f"Error: Received status code {r.status_code}"
+
                     Yo = None
 
                 if Yo == "sticker":
@@ -107,4 +123,3 @@ async def log_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 USER_HANDLER = MessageHandler(filters.ALL, log_user, block=False)
 rani.add_handler(USER_HANDLER, USERS_GROUP)
-                
