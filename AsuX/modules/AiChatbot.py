@@ -3,6 +3,7 @@
 ᴛᴇʟᴇɢʀᴀᴍ @Abishnoi1M / @Abishnoi_bots 
 
 """
+
 import random
 import requests
 from pymongo import MongoClient
@@ -46,14 +47,16 @@ async def log_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
     message = update.effective_message
 
+    logger.info(f"Received message: {message.text}")
+
     # Ignore commands or special messages
     if message.text and message.text.startswith(("!", "/", "?", "@", "#")):
         return
 
-    chatbotdb = MongoClient(MONGO_DB_URL)
-    chatbotai = chatbotdb["Word"]["WordDb"]
-
     try:
+        chatbotdb = MongoClient(MONGO_DB_URL)
+        chatbotai = chatbotdb["Word"]["WordDb"]
+        
         if not message.reply_to_message:
             # Check if there's a stored response for the user's input
             response_texts = [x["text"] for x in chatbotai.find({"chat": chat.id, "word": message.text})]
@@ -63,10 +66,9 @@ async def log_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 response = await fetch_response(message)
 
             await message.reply_text(response)
-
         else:
             # Handle replies to the bot
-            if message.reply_to_message.from_user.id == BOT_ID:
+            if message.reply_to_message.from_user.id == context.bot.id:
                 response_texts = [x["text"] for x in chatbotai.find({"chat": chat.id, "word": message.text})]
                 if response_texts:
                     response = random.choice(response_texts)
@@ -82,9 +84,10 @@ async def log_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
 rani = Application.builder().token(TOKEN).build()
 
 # Add message handler
-USER_HANDLER = MessageHandler(filters.ALL, log_user)
+USER_HANDLER = MessageHandler(filters.TEXT & ~filters.COMMAND, log_user)  # Only text messages
 rani.add_handler(USER_HANDLER)
 
 if __name__ == '__main__':
+    logger.info("Starting the bot...")
     rani.run_polling()
     
