@@ -44,20 +44,6 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=InlineKeyboardMarkup(akboss),
     )
 
-out = start_panel(_)
-                    photo=config.START_IMG_URL,
-                    caption=_["start_3"].format(
-                        message.from_user.first_name,
-                        app.mention,
-                        message.chat.title,
-                        app.mention,
-                    ),
-                    reply_markup=InlineKeyboardMarkup(out),
-                )
-                await add_served_chat(message.chat.id)
-                await message.stop_propagation()
-
-
 START = CommandHandler(["chatbot", "start"], start, block=False)
 HELP = CommandHandler(["chelp", "help"], help, block=False)
 
